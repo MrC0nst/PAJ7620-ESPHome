@@ -3,6 +3,9 @@
 #include "esphome.h"
 #include <paj7620.h>
 
+uint32_t reset_after = 0;
+uint8_t previous_guesture = 0xFF;
+
 namespace esphome {
 namespace paj7620 {
 
@@ -37,8 +40,16 @@ class PAJ7620 : public PollingComponent {
 
 			if (data) {
 				const char* state = guestureToString(data);
-				
+				if (previous_guesture != data) {
+					  reset_after = millis() + 300; // 300 мс задержки
+					  previous_guesture = data;
+				}
 				guesture_sensor->publish_state(state);
+			}
+			if (reset_after > millis()) {
+				reset_after = 0;
+				previous_guesture = 0xFF;
+				guesture_sensor->publish_state("");
 			}
 		}
 		
